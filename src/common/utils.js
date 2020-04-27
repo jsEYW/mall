@@ -1,5 +1,5 @@
 // 防抖函数（减少函数的调用）
-export function debounce(func, delay) {
+export function debounce(func, delay=500) {
   let timer = null;
   return function(...args) {
     if (timer) clearTimeout(timer);

@@ -1,14 +1,14 @@
 <template>
   <div id="detail">
-      <detail-nav-bar class="detail-nav"></detail-nav-bar>
-      <scroll class="content" ref="scroll">
+      <detail-nav-bar class="detail-nav" ref="nav" @titleClick="titleClick"></detail-nav-bar>
+      <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll">
         <detail-swiper :top-images="topImages"></detail-swiper>
         <detail-base-info :bgoods="goods"></detail-base-info>
         <detail-shop-info :shop="shop"></detail-shop-info>
         <detail-goods-info :detail-info="detailInfo" @imageLoad="imageLoad" />
-        <detail-param-info :param-info="paramInfo"></detail-param-info>
-        <detail-comment-info :comment-info="commentInfo"></detail-comment-info>
-        <goods-list :goods="recommends"></goods-list>
+        <detail-param-info ref="param" :param-info="paramInfo"></detail-param-info>
+        <detail-comment-info ref="comment" :comment-info="commentInfo"></detail-comment-info>
+        <goods-list ref="recommend" :goods="recommends"></goods-list>
       </scroll>
   </div>
 </template>
@@ -27,6 +27,7 @@ import GoodsList from "components/content/goods/GoodsList"
 
 import {getDetail, getRecommend, Goods, Shop, GoodsParam} from "network/detail"
 import {itemListenerMixin} from "common/mixin"
+import {debounce} from "common/utils.js"
 
 export default {
     name: 'Detail',
@@ -53,6 +54,9 @@ export default {
             paramInfo: {},
             commentInfo: {},
             recommends: [],
+            themeTopYs: [],
+            getThemeTopY: null,
+            currnetIndex: 0
         }
     },
     created() {
@@ -75,11 +79,26 @@ export default {
             if (data.rate.Crate !==0) {
                 this.commentInfo  = data.rate.list[0]
             }
+            // 执行完上面的获取并渲染完回调此函数
+            // this.$nextTick(() => {
+            //     // 根据最新的数据，对应的DOM已经被渲染，但图片未加载完（有问题）
+            //     this.themeTopYs = []
+            //     this.themeTopYs.push(0);
+            //     this.themeTopYs.push(this.$refs.param.$el.offsetTop)
+            //     this.themeTopYs.push(this.$refs.comment.$el.offsetTop)
+            //     this.themeTopYs.push(this.$refs.ercommend.$el.offsetTop)
+            // })
         })
         // 请求推荐数据
         getRecommend().then(res => {
             this.recommends = res.data.list
-            
+        })
+        // 给getThemeTopY赋值
+        this.getThemeTopY = debounce( () => {  
+            this.themeTopYs.push(0);
+            this.themeTopYs.push(this.$refs.param.$el.offsetTop - 44)
+            this.themeTopYs.push(this.$refs.comment.$el.offsetTop - 44)
+            this.themeTopYs.push(this.$refs.recommend.$el.offsetTop - 44)
         })
     },
     mounted() {
@@ -89,7 +108,32 @@ export default {
     },
     methods: {
         imageLoad() {
-            this.$refs.scroll.refresh()
+            // 防抖刷新
+            this.newRefresh()
+            // 调用防抖获取themeTopYs
+            this.getThemeTopY()
+            
+            // 可以加这里，但使用频繁
+            // this.themeTopYs = []
+            // this.themeTopYs.push(0);
+            // this.themeTopYs.push(this.$refs.param.$el.offsetTop)
+            // this.themeTopYs.push(this.$refs.comment.$el.offsetTop)
+            // this.themeTopYs.push(this.$refs.ercommend.$el.offsetTop)
+        },
+        titleClick(index) {
+            this.$refs.scroll.scrollTo(0, -this.themeTopYs[index],200)
+        },
+        contentScroll(position) {
+            let positionY = -position.y
+            let length = this.themeTopYs.length
+            for(let i=0; i<length; i++) {
+                if(this.currnetIndex !== i && ((i < length - 1 && positionY >= this.themeTopYs[i] && positionY < 
+                this.themeTopYs[i+1]) ||(i ===length - 1 && positionY >= this.themeTopYs[i]))) {
+                    this.currnetIndex = i;
+                    this.$refs.nav.currentIndex = this.currnetIndex
+                }
+            }
+            
         }
     }
 }
