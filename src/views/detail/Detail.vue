@@ -10,6 +10,8 @@
         <detail-comment-info ref="comment" :comment-info="commentInfo"></detail-comment-info>
         <goods-list ref="recommend" :goods="recommends"></goods-list>
       </scroll>
+      <detail-button-bar @addToCart="addToCart"></detail-button-bar>
+      <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
   </div>
 </template>
 
@@ -21,13 +23,16 @@ import DetailShopInfo from "./childComps/DetailShopInfo"
 import DetailGoodsInfo from "./childComps/DetailGoodsInfo"
 import DetailParamInfo from "./childComps/DetaiParamInfo"
 import DetailCommentInfo from "./childComps/DetailCommentInfo"
+import DetailButtonBar from "./childComps/DetailButtonBar"
 
 import Scroll from "components/common/scroll/Scroll"
 import GoodsList from "components/content/goods/GoodsList"
 
 import {getDetail, getRecommend, Goods, Shop, GoodsParam} from "network/detail"
-import {itemListenerMixin} from "common/mixin"
+import {itemListenerMixin, backTopMixin} from "common/mixin"
 import {debounce} from "common/utils.js"
+import {BACKTOP_DISTANCE} from "common/const"
+
 
 export default {
     name: 'Detail',
@@ -39,11 +44,12 @@ export default {
         DetailGoodsInfo,
         DetailParamInfo,
         DetailCommentInfo,
+        DetailButtonBar,
 
         Scroll,
-        GoodsList
+        GoodsList,
     },
-    mixins: [itemListenerMixin],
+    mixins: [itemListenerMixin,backTopMixin],
     data() {
         return {
             iid: null,
@@ -56,7 +62,7 @@ export default {
             recommends: [],
             themeTopYs: [],
             getThemeTopY: null,
-            currnetIndex: 0
+            currnetIndex: 0,
         }
     },
     created() {
@@ -99,6 +105,7 @@ export default {
             this.themeTopYs.push(this.$refs.param.$el.offsetTop - 44)
             this.themeTopYs.push(this.$refs.comment.$el.offsetTop - 44)
             this.themeTopYs.push(this.$refs.recommend.$el.offsetTop - 44)
+            this.themeTopYs.push(Number.MAX_VALUE)
         })
     },
     mounted() {
@@ -126,14 +133,39 @@ export default {
         contentScroll(position) {
             let positionY = -position.y
             let length = this.themeTopYs.length
-            for(let i=0; i<length; i++) {
-                if(this.currnetIndex !== i && ((i < length - 1 && positionY >= this.themeTopYs[i] && positionY < 
-                this.themeTopYs[i+1]) ||(i ===length - 1 && positionY >= this.themeTopYs[i]))) {
+            for(let i=0; i<length-1; i++) {
+                if(this.currnetIndex !== i && (positionY >= this.themeTopYs[i] &&
+                positionY < this.themeTopYs[i+1])) {
                     this.currnetIndex = i;
                     this.$refs.nav.currentIndex = this.currnetIndex
                 }
             }
             
+            // 判断backTop是否显示
+            this.isShowBackTop = -position.y > BACKTOP_DISTANCE;
+
+
+            // 普通做法
+            //     for(let i=0; i<length; i++) {
+            //         if(this.currnetIndex !== i && ((i < length - 1 && positionY >= this.themeTopYs[i] && positionY < 
+            //         this.themeTopYs[i+1]) ||(i ===length - 1 && positionY >= this.themeTopYs[i]))) {
+            //             this.currnetIndex = i;
+            //             this.$refs.nav.currentIndex = this.currnetIndex
+            //         }
+            //     }
+            
+        },
+        addToCart() {
+            // 获取商品数据
+            const produst = {}
+            produst.image = this.topImages[0]
+            produst.title = this.goods.title
+            produst.desc = this.goods.desc
+            produst.price = this.goods.realPrice
+            produst.iid = this.iid
+            // 将商品加入购物车
+            // this.$store.cartList.push(produst)
+            this.$store.dispatch('addCart', produst)
         }
     }
 }
@@ -153,6 +185,6 @@ export default {
     background-color: #fff;
 }
 .content {
-    height: calc(100% - 44px);
+    height: calc(100% - 44px - 49px);
 }
 </style>

@@ -37,6 +37,7 @@ import BackTop from "components/content/backTop/BackTop";
 
 import { getHomeMultidata, getHomeGoods } from "network/home";
 import {itemListenerMixin} from "common/mixin"
+import {BACKTOP_DISTANCE} from "common/const"
 
 export default {
   name: "Home",
@@ -122,7 +123,7 @@ export default {
     },
     contentScroll(position) {
       // 判断backTop是否显示
-      this.isShowBackTop = -position.y > 1000;
+      this.isShowBackTop = -position.y > BACKTOP_DISTANCE;
       // 决定tabControl是否吸顶（position：fixed）
       this.isTabFixed = (-position.y) > this.tabOffsetTop
     },
