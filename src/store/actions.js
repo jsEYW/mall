@@ -11,13 +11,17 @@ export default {
         // }
 
         // 换方法
-        let oldProduct = context.state.cartList.find(item => item.iid === payload.iid)
-        // 判断oldProduct
-        if(oldProduct) {
-            context.commit('ADD_CONTER', oldProduct)
-        }else{
-            payload.count = 1 
-            context.commit('ADD_CART', payload)
-        }
+        return new Promise((resolve, reject) => {
+            let oldProduct = context.state.cartList.find(item => item.iid === payload.iid)
+            // 判断oldProduct
+            if(oldProduct) {
+                context.commit('ADD_CONTER', oldProduct)
+                resolve('商品 +1 ')
+            }else{
+                payload.count = 1 
+                context.commit('ADD_CART', payload)
+                resolve('加入新的商品')
+            }
+        })
     }
 }

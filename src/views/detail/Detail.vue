@@ -165,7 +165,10 @@ export default {
             produst.iid = this.iid
             // 将商品加入购物车
             // this.$store.cartList.push(produst)
-            this.$store.dispatch('addCart', produst)
+            this.$store.dispatch('addCart', produst).then(res => {
+                this.$toast.show(res)
+                
+            })
         }
     }
 }
