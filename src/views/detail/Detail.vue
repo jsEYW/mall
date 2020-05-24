@@ -164,7 +164,7 @@ export default {
             produst.price = this.goods.realPrice
             produst.iid = this.iid
             // 将商品加入购物车
-            // this.$store.cartList.push(produst)
+            // this.$store.cartList.push(produst)要用mutation改state
             this.$store.dispatch('addCart', produst).then(res => {
                 this.$toast.show(res)
                 
